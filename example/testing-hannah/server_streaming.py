@@ -19,10 +19,10 @@ class VoskWebSocketServer:
     def __init__(self):
         self.moving_chunk_cache = b""
         self.all_chunk_cache = b""
-        self.highest_id_collector = 1
+        self.latest_start_time = 0
 
         # number of chunks to cache for partial transcription
-        self.moving_chunk_cache_size = 10
+        self.moving_chunk_cache_size = 20
 
         self.sample_rate = 16000
         self.num_channels = 1
@@ -69,7 +69,7 @@ class VoskWebSocketServer:
                         self.all_chunk_cache = b""
             except websockets.exceptions.ConnectionClosedOK:
                 print("ConnectionClosedOK")
-                print(self.highest_id_collector)
+                print(self.latest_start_time)
                 break
 
     def transcribe_all_chunk_cache(
@@ -113,15 +113,12 @@ class VoskWebSocketServer:
             if "segments" in data:
                 text = ""
                 for segment in data["segments"]:
-                    ids = segment["id"]
-                    if ids > self.highest_id_collector:
-                        self.highest_id_collector = ids
-
-                    for segment in data["segments"]:
-                        ids_aktuell = segment["id"]
-                        if ids_aktuell == self.highest_id_collector:
-                            text = text + segment["text"]
-
+                    for words in segment["words"]:
+                        ends = words["end"]
+                        starts = words["start"]
+                        if starts >= self.latest_start_time:
+                            self.latest_start_time = starts
+                            text = text + words["word"]
                 return json.dumps({"partial": text}, indent=2)
 
     def transcribe_bytes(self, audio_chunk: bytes):

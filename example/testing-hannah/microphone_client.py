@@ -8,7 +8,7 @@ import speech_recognition as sr
 from pydub import AudioSegment
 import websockets
 
-AUDIO_FILE_LENGTH = 2  # seconds
+AUDIO_FILE_LENGTH = 1  # seconds
 
 
 class SpeechListener:
